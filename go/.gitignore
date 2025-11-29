@@ -1,0 +1,30 @@
+# Compiled binaries, build artifacts, and vendor files
+
+# Executable files/binaries (local and cross-compiled)
+*.exe
+*.dll
+*.so
+*.dylib
+*.o
+*.a
+*.out
+.cache
+/tmp
+
+# Test binary files (ignored by default, but explicit is better)
+*_test
+
+# Dependency directories
+# Vendor directory is typically ignored if you use Go Modules (Go 1.11+)
+vendor/
+
+# Go Modules cache and metadata
+# Go 1.16+ typically uses the go.mod and go.sum files instead of vendor/
+pkg/
+
+# Log files and database files
+*.log
+*.db
+
+# Environment files
+.env
