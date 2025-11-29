@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
+	"os"
 )
 
 func main() {
@@ -26,23 +28,36 @@ func main() {
 			// data to hold input
 			data := make([]byte, 1024)
 
-			// read the input into data, and count the bytes read
-			bytesRead, err := connection.Read(data)
-			if err != nil {
-				fmt.Println(err)
-			}
+			for {
+				// read the input into data, and count the bytes read
+				bytesRead, err := connection.Read(data)
+				if err != nil {
+					fmt.Println(err)
+					if err == io.EOF {
+						fmt.Printf("goodbye :)")
+						os.Exit(0)
+					}
+				}
 
-			// get the data into a usable slice
-			dataSlice := []byte{}
-			for idx := range bytesRead {
-				dataSlice = append(dataSlice, data[idx])
-			}
+				// check if there has been a response from client
+				if bytesRead == 0 {
+					continue
+				}
+				// get the data into a usable slice
+				dataSlice := []byte{}
+				for idx := range bytesRead {
+					dataSlice = append(dataSlice, data[idx])
+				}
 
-			wroteData, err := netConnection.Write(dataSlice)
-			if err != nil {
-				panic(err)
+				// clear out the data slice
+				data = data[:0]
+
+				wroteData, err := connection.Write(dataSlice)
+				if err != nil {
+					panic(err)
+				}
+				fmt.Printf("%d, %b", wroteData, dataSlice)
 			}
-			fmt.Printf("%d, %b", wroteData, dataSlice)
 		}(netConnection)
 	}
 }
