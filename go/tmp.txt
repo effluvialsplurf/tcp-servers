@@ -1,0 +1,1 @@
+connected: &{{%!s(*net.netFD=&{{{0 0 0} 4 {<nil>} {128463375621120} 0 0 true true false} 10 1 false tcp 0xc000122510 0xc000122540})}}read: Do you have what it takes to be an engineer at TheStartup™?

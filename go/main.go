@@ -1,63 +1,80 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"net"
-	"os"
 )
 
-func main() {
-	// initialize my listener and close it later
-	listener, err := net.Listen("tcp", "localhost:8008")
-	if err != nil {
-		panic(err)
-	}
-	defer listener.Close()
+func getLinesChannel(f io.ReadCloser) <-chan string {
+	// this will be our return channel
+	out := make(chan string, 1)
 
-	// loop waiting to accept connections
-	for {
-		// get the netconnection (net.conn)
-		netConnection, err := listener.Accept()
-		if err != nil {
-			panic(err)
+	go func() {
+		// close the file and the channel when they are no longer needed
+		defer f.Close()
+		defer close(out)
+
+		// initialize the string variable
+		str := ""
+		// for loop to iterate over the contents of the file
+		for {
+			// this holds our data
+			data := make([]byte, 8)
+			n, err := f.Read(data)
+			if err != nil {
+				break
+			}
+
+			// constrain data to the length of the available contents
+			data = data[:n]
+			// if we are a newline or we are -1
+			if i := bytes.IndexByte(data, '\n'); i != -1 {
+				str += string(data[:i])
+				// make data empty again using the contents and memory space of the variable
+				data = data[i+1:]
+				// throw the contents of str in the channel
+				out <- str
+				str = ""
+			}
+
+			// output the string
+			str += string(data)
 		}
 
-		// split off for different concurrent routines if connections come in
-		go func(connection net.Conn) {
-			// data to hold input
-			data := make([]byte, 1024)
+		if len(str) != 0 {
+			// if there is anything leftover throw it in the channel
+			out <- str
+		}
+	}()
 
-			for {
-				// read the input into data, and count the bytes read
-				bytesRead, err := connection.Read(data)
-				if err != nil {
-					fmt.Println(err)
-					if err == io.EOF {
-						fmt.Printf("goodbye :)")
-						os.Exit(0)
-					}
-				}
+	return out
+}
 
-				// check if there has been a response from client
-				if bytesRead == 0 {
-					continue
-				}
-				// get the data into a usable slice
-				dataSlice := []byte{}
-				for idx := range bytesRead {
-					dataSlice = append(dataSlice, data[idx])
-				}
+func main() {
+	// grab the listener
+	listener, err := net.Listen("tcp", ":42069")
+	defer func() {
+		listener.Close()
+		fmt.Println("conn closed")
+	}()
+	// if opening fails log the error
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-				// clear out the data slice
-				data = data[:0]
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Fatal(err)
+		}
 
-				wroteData, err := connection.Write(dataSlice)
-				if err != nil {
-					panic(err)
-				}
-				fmt.Printf("%d, %b", wroteData, dataSlice)
-			}
-		}(netConnection)
+		fmt.Printf("connected: %s", conn)
+
+		for line := range getLinesChannel(conn) {
+			fmt.Printf("read: %s\n", line)
+		}
 	}
 }
