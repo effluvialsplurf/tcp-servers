@@ -1,0 +1,7 @@
+connected: &{{%!s(*net.netFD=&{{{0 0 0} 4 {<nil>} {127903019179008} 0 0 true true false} 10 1 false tcp 0xc000122510 0xc000122540})}}read: POST /coffee HTTP/1.1
+read: Host: localhost:42069
+read: User-Agent: curl/8.5.0
+read: Accept: */*
+read: Content-Type: application/json
+read: Content-Length: 22
+read: 
